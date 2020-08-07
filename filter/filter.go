@@ -9,7 +9,7 @@ import (
 var allowed *net.IPNet
 
 func init() {
-	c := os.Getenv("JUMP_ALLOW_CIDR")
+	c := os.Getenv("JUMP_ALLOW")
 	if c == "" {
 		_, allowed, _ = net.ParseCIDR("0.0.0.0/0")
 		return

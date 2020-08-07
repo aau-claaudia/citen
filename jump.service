@@ -1,0 +1,19 @@
+[Unit]
+Description=jump - ssh jump host
+After=network.target
+
+[Service]
+ExecStart=/usr/local/bin/jump
+Restart=always
+
+DynamicUser=yes
+AmbientCapabilities=CAP_NET_BIND_SERVICE
+
+ConfigurationDirectory=jump
+Environment=JUMP_LISTEN=0.0.0.0:22
+
+# Allow hosts from 192.168.128.1 to 192.168.255.254
+Environment=JUMP_ACCESS=192.168.128.0/17
+
+[Install]
+WantedBy=multi-user.target

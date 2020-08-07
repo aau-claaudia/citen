@@ -32,7 +32,7 @@ Now, that jump is running, you can use the ssh client's -J parameter to jump tho
 ssh -J jumphostname 192.168.1.100
 ```
 
-This is not limited to ssh connections, your could also access a http server located in the network:
+This is not limited to ssh connections, you could also access a http server located in the network:
 
 ```
 ssh -L8080:192.168.1.42:80 jumphostname
