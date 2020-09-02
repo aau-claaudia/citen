@@ -4,22 +4,32 @@ import (
 	"log"
 	"net"
 	"os"
+	"strings"
 )
 
-var allowed *net.IPNet
+var allowed []*net.IPNet
 
 func init() {
 	c := os.Getenv("JUMP_ALLOW")
 	if c == "" {
-		_, allowed, _ = net.ParseCIDR("0.0.0.0/0")
+		_, a, _ := net.ParseCIDR("0.0.0.0/0")
+		allowed = []*net.IPNet{a}
 		return
 	}
 
-	var err error
-	_, allowed, err = net.ParseCIDR(c)
-	if err != nil {
-		log.Fatalf("unable to parse CIDR %s: %s", c, err)
+	split := strings.Split(c, ",")
+	allowed = make([]*net.IPNet, len(split))
+
+	for i, cidr := range split {
+		_, a, err := net.ParseCIDR(cidr)
+		if err != nil {
+			log.Fatalf("unable to parse CIDR %s: %s", c, err)
+		}
+
+		allowed[i] = a
+
 	}
+
 }
 
 // IsAllowed checks if an ip address is OK to connect to
@@ -29,5 +39,13 @@ func IsAllowed(i string) bool {
 		return false
 	}
 
-	return allowed.Contains(ip)
+	// have a go at every range
+	for _, cidr := range allowed {
+		if cidr.Contains(ip) {
+			return true
+		}
+	}
+
+	// if we end up here, access should be denied
+	return false
 }
