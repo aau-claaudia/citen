@@ -7,7 +7,6 @@ import (
 	"log"
 	"net"
 	"os"
-	"sync"
 	"time"
 
 	"github.com/fasmide/jump/filter"
@@ -117,6 +116,18 @@ func (s *Server) accept(c net.Conn) {
 		}
 	}(reqs)
 
+	go func() {
+		timer := time.NewTicker(10 * time.Second)
+		for range timer.C {
+			_, _, err := conn.SendRequest("keepalive@openssh.com", true, nil)
+			if err != nil {
+				timer.Stop()
+				conn.Close()
+				return
+			}
+		}
+	}()
+
 	// Service the incoming Channel channel.
 	for channelRequest := range chans {
 
@@ -162,29 +173,19 @@ func (s *Server) accept(c net.Conn) {
 		}
 
 		go ssh.DiscardRequests(requests)
-		var wg sync.WaitGroup
 
 		// pass traffic in both directions - close channel when io.Copy returns
-		wg.Add(1)
 		go func() {
 			io.Copy(forwardConnection, channel)
 			channel.Close()
-			wg.Done()
 		}()
 
-		wg.Add(1)
 		go func() {
 			io.Copy(channel, forwardConnection)
 			channel.Close()
-			wg.Done()
 		}()
 
-		go func() {
-			wg.Wait()
-			forwardConnection.Close()
-		}()
 	}
-
 	log.Print("client went away ", conn.RemoteAddr())
 
 }
