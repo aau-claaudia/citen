@@ -1,7 +1,6 @@
 package keyscan
 
 import (
-	"crypto/md5"
 	"fmt"
 	"log"
 	"net"
@@ -20,12 +19,7 @@ func IsAllowed(target, username string, publickey []byte) bool {
 		return false
 	}
 
-	// calculate public key fingerprint
-	// https://datatracker.ietf.org/doc/html/rfc4716#section-4
-	hash := md5.New()
-	hash.Write(key.Marshal())
-
-	log.Printf("keyscan: trying %s against %s@%s", fmt.Sprintf("%x", hash.Sum(nil)), username, target)
+	log.Printf("keyscan: trying %s against %s@%s", ssh.FingerprintSHA256(key), username, target)
 
 	signers := func() ([]ssh.Signer, error) {
 		return []ssh.Signer{&fakeSigner{
@@ -56,7 +50,7 @@ func IsAllowed(target, username string, publickey []byte) bool {
 
 	if err != nil {
 		log.Printf("keyscan: unable to verify %s against %s@%s: %s",
-			fmt.Sprintf("%x", hash.Sum(nil)),
+			fmt.Sprintf("%x", ssh.FingerprintSHA256(key)),
 			username,
 			target,
 			err.Error(),
