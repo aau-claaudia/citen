@@ -154,7 +154,7 @@ func (s *Server) accept(c net.Conn) {
 		}
 	}()
 
-	// Service the incoming Channel channel.
+	// service the incoming Channel channel.
 	for channelRequest := range chans {
 
 		if channelRequest.ChannelType() != "direct-tcpip" {
@@ -170,27 +170,27 @@ func (s *Server) accept(c net.Conn) {
 			continue
 		}
 
-		// First, filter allowed targets
+		// filter targets
 		if !filter.IsAllowed(forwardInfo.Addr) {
 			channelRequest.Reject(ssh.Prohibited, fmt.Sprintf("%s is not in my allowed forward list", forwardInfo.Addr))
 			continue
 		}
 
-		// then check if the destination agrees on this public key
+		// keyscan target
 		if !keyscan.IsAllowed(forwardInfo.To(), conn.User(), []byte(conn.Permissions.Extensions["publickey"])) {
 			channelRequest.Reject(ssh.Prohibited, fmt.Sprintf("ssh daemon at %s does not approve of this jump", forwardInfo.Addr))
 			continue
 		}
 
+		// dial target
 		forwardConnection, err := net.Dial("tcp", forwardInfo.To())
-
 		if err != nil {
 			log.Printf("unable to dial %s: %s", forwardInfo.To(), err)
 			channelRequest.Reject(ssh.ConnectionFailed, fmt.Sprintf("failed to dial %s: %s", forwardInfo.To(), err))
 			continue
 		}
 
-		// Accept channel from ssh client
+		// accept channel from ssh client
 		log.Printf("accepting forward to %s:%d", forwardInfo.Addr, forwardInfo.Rport)
 		channel, requests, err := channelRequest.Accept()
 		if err != nil {
