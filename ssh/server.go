@@ -16,19 +16,15 @@ import (
 
 // Server represents a listening ssh server
 type Server struct {
-	// Config is the ssh serverconfig
-	Config *ssh.ServerConfig
+	config *ssh.ServerConfig
 }
 
 // Serve will accept ssh connections
 func (s *Server) Serve(l net.Listener) error {
-	if s.Config == nil {
-		var err error
-		s.Config, err = DefaultConfig()
-
-		if err != nil {
-			return fmt.Errorf("unable to set default ssh config: %w", err)
-		}
+	var err error
+	s.config, err = DefaultConfig()
+	if err != nil {
+		return fmt.Errorf("unable to configure: %w", err)
 	}
 
 	for {
@@ -95,7 +91,7 @@ func (s *Server) accept(c net.Conn) {
 	})
 
 	// ssh handshake and auth
-	conn, chans, reqs, err := ssh.NewServerConn(c, s.Config)
+	conn, chans, reqs, err := ssh.NewServerConn(c, s.config)
 	if err != nil {
 		log.Print("failed to handshake: ", err)
 		return
