@@ -1,7 +1,6 @@
 package keyscan
 
 import (
-	"fmt"
 	"log"
 	"net"
 
@@ -50,7 +49,7 @@ func IsAllowed(target, username string, publickey []byte) bool {
 
 	if err != nil {
 		log.Printf("keyscan: unable to verify %s against %s@%s: %s",
-			fmt.Sprintf("%x", ssh.FingerprintSHA256(key)),
+			ssh.FingerprintSHA256(key),
 			username,
 			target,
 			err.Error(),

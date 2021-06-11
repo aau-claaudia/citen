@@ -48,7 +48,8 @@ func DefaultConfig() (*ssh.ServerConfig, error) {
 			// store public key
 			s := &ssh.Permissions{
 				Extensions: map[string]string{
-					"publickey": string(key.Marshal()),
+					"publickey":    string(key.Marshal()),
+					"publickey-fp": ssh.FingerprintSHA256(key),
 				},
 			}
 
@@ -74,12 +75,12 @@ func signer() (ssh.Signer, error) {
 
 	privateBytes, err := ioutil.ReadFile(p)
 	if err != nil {
-		return nil, fmt.Errorf("Failed to load private key: %s", err)
+		return nil, fmt.Errorf("failed to load private key: %s", err)
 	}
 
 	signer, err := ssh.ParsePrivateKey(privateBytes)
 	if err != nil {
-		return nil, fmt.Errorf("Failed to parse private key: %s", err)
+		return nil, fmt.Errorf("failed to parse private key: %s", err)
 	}
 
 	return signer, nil
@@ -102,9 +103,10 @@ func (s *Server) accept(c net.Conn) {
 
 	authTimer.Stop()
 
-	log.Printf("accepted session from %s", conn.RemoteAddr())
+	log.Printf("accepted session from %s@%s with key %s", conn.User(), conn.RemoteAddr(), conn.Permissions.Extensions["publickey-fp"])
 
-	// The incoming Request channel must be serviced.
+	// the incoming Request channel must be serviced.
+	// we will only respond to keepalive requests
 	go func(reqs <-chan *ssh.Request) {
 		for req := range reqs {
 			if req.Type == "keepalive@openssh.com" {
@@ -116,27 +118,39 @@ func (s *Server) accept(c net.Conn) {
 		}
 	}(reqs)
 
+	// we should also send out keepalive requests
+	// the primary reason for this is to clean up dead connections
 	go func() {
-		ticker := time.NewTicker(10 * time.Second)
+		// send keepalive requests every minute
+		ticker := time.NewTicker(time.Minute)
+
 		for range ticker.C {
 			// If this timer fires - the client didnt respond to our
 			// keepalive - and we should teardown the session
-			timeout := time.AfterFunc(5*time.Second, func() {
+			timeout := time.AfterFunc(10*time.Second, func() {
+				// dont send any more keepalive requests
 				ticker.Stop()
 
-				log.Printf("connection timeout")
-
+				// teardown the connection
 				conn.Close()
+
 			})
 
 			_, _, err := conn.SendRequest("keepalive@openssh.com", true, nil)
+
+			// stop timeout, we did in fact receive something
+			timeout.Stop()
+
 			if err != nil {
+				// dont send any more keepalive requests
 				ticker.Stop()
+
+				// teardown the connection
 				conn.Close()
+
 				return
 			}
 
-			timeout.Stop()
 		}
 	}()
 
@@ -198,6 +212,7 @@ func (s *Server) accept(c net.Conn) {
 		}()
 
 	}
-	log.Print("client went away ", conn.RemoteAddr())
+
+	log.Printf("session from %s@%s with key %s closed", conn.User(), conn.RemoteAddr(), conn.Permissions.Extensions["publickey-fp"])
 
 }
