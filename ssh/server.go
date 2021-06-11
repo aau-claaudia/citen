@@ -7,9 +7,11 @@ import (
 	"log"
 	"net"
 	"os"
+	"sync"
 	"time"
 
 	"github.com/fasmide/jump/filter"
+	"github.com/fasmide/jump/keyscan"
 	"golang.org/x/crypto/ssh"
 )
 
@@ -43,13 +45,23 @@ func (s *Server) Serve(l net.Listener) error {
 // DefaultConfig generates a default ssh.ServerConfig
 func DefaultConfig() (*ssh.ServerConfig, error) {
 	config := &ssh.ServerConfig{
-		NoClientAuth: true,
+		PublicKeyCallback: func(conn ssh.ConnMetadata, key ssh.PublicKey) (*ssh.Permissions, error) {
+			// store public key
+			s := &ssh.Permissions{
+				Extensions: map[string]string{
+					"publickey": string(key.Marshal()),
+				},
+			}
+
+			return s, nil
+		},
 	}
 
 	signer, err := signer()
 	if err != nil {
 		return nil, err
 	}
+
 	config.AddHostKey(signer)
 
 	return config, nil
@@ -121,8 +133,15 @@ func (s *Server) accept(c net.Conn) {
 			continue
 		}
 
+		// First, filter for allowed endpoints
 		if !filter.IsAllowed(forwardInfo.Addr) {
 			channelRequest.Reject(ssh.Prohibited, fmt.Sprintf("%s is not in my allowed forward list", forwardInfo.Addr))
+			continue
+		}
+
+		// then check if the destination agrees on this public key
+		if !keyscan.IsAllowed(forwardInfo.To(), conn.User(), []byte(conn.Permissions.Extensions["publickey"])) {
+			channelRequest.Reject(ssh.Prohibited, fmt.Sprintf("ssh daemon at %s does not approve of this jump", forwardInfo.Addr))
 			continue
 		}
 
@@ -143,17 +162,29 @@ func (s *Server) accept(c net.Conn) {
 		}
 
 		go ssh.DiscardRequests(requests)
+		var wg sync.WaitGroup
 
 		// pass traffic in both directions - close channel when io.Copy returns
+		wg.Add(1)
 		go func() {
 			io.Copy(forwardConnection, channel)
 			channel.Close()
+			wg.Done()
 		}()
+
+		wg.Add(1)
 		go func() {
 			io.Copy(channel, forwardConnection)
 			channel.Close()
+			wg.Done()
+		}()
+
+		go func() {
+			wg.Wait()
+			forwardConnection.Close()
 		}()
 	}
 
 	log.Print("client went away ", conn.RemoteAddr())
+
 }
