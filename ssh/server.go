@@ -117,14 +117,26 @@ func (s *Server) accept(c net.Conn) {
 	}(reqs)
 
 	go func() {
-		timer := time.NewTicker(10 * time.Second)
-		for range timer.C {
+		ticker := time.NewTicker(10 * time.Second)
+		for range ticker.C {
+			// If this timer fires - the client didnt respond to our
+			// keepalive - and we should teardown the session
+			timeout := time.AfterFunc(5*time.Second, func() {
+				ticker.Stop()
+
+				log.Printf("connection timeout")
+
+				conn.Close()
+			})
+
 			_, _, err := conn.SendRequest("keepalive@openssh.com", true, nil)
 			if err != nil {
-				timer.Stop()
+				ticker.Stop()
 				conn.Close()
 				return
 			}
+
+			timeout.Stop()
 		}
 	}()
 
