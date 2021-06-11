@@ -133,7 +133,7 @@ func (s *Server) accept(c net.Conn) {
 			continue
 		}
 
-		// First, filter for allowed endpoints
+		// First, filter allowed targets
 		if !filter.IsAllowed(forwardInfo.Addr) {
 			channelRequest.Reject(ssh.Prohibited, fmt.Sprintf("%s is not in my allowed forward list", forwardInfo.Addr))
 			continue
