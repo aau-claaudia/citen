@@ -3,6 +3,7 @@ package keyscan
 import (
 	"log"
 	"net"
+	"time"
 
 	"golang.org/x/crypto/ssh"
 )
@@ -32,6 +33,7 @@ func IsAllowed(target, username string, publickey []byte) bool {
 			ssh.PublicKeysCallback(signers),
 		},
 		HostKeyCallback: ssh.InsecureIgnoreHostKey(),
+		Timeout:         time.Second * 10,
 	}
 
 	// dial up the target host
