@@ -158,6 +158,7 @@ func (s *Server) accept(c net.Conn) {
 			continue
 		}
 
+		// parse request
 		forwardInfo := directTCPIP{}
 		err := ssh.Unmarshal(channelRequest.ExtraData(), &forwardInfo)
 		if err != nil {
@@ -166,7 +167,7 @@ func (s *Server) accept(c net.Conn) {
 			continue
 		}
 
-		// filter targets
+		// filter target
 		if !filter.IsAllowed(forwardInfo.Addr) {
 			channelRequest.Reject(ssh.Prohibited, fmt.Sprintf("%s is not in my allowed forward list", forwardInfo.Addr))
 			continue
@@ -174,7 +175,7 @@ func (s *Server) accept(c net.Conn) {
 
 		// keyscan target
 		if !keyscan.IsAllowed(forwardInfo.To(), conn.User(), []byte(conn.Permissions.Extensions["publickey"])) {
-			channelRequest.Reject(ssh.Prohibited, fmt.Sprintf("ssh daemon at %s does not approve of this jump", forwardInfo.Addr))
+			channelRequest.Reject(ssh.Prohibited, fmt.Sprintf("%s does not approve", forwardInfo.Addr))
 			continue
 		}
 

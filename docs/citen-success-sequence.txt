@@ -1,0 +1,31 @@
+title ssh -J jumphost 10.0.100.211
+
+participant user
+participant jumphost
+participant 10.0.100.211
+
+user->jumphost:SSH_MSG_USERAUTH_REQUEST\nwith USER emil and PUBKEY SHA256:+rafG2f3...
+user<--jumphost:SSH_MSG_USERAUTH_PK_OK
+note over jumphost:The jumphost accepts any combination of\n usernames and keypairs, they continue...
+user->jumphost: SSH_MSG_USERAUTH_REQUEST\nwith USER, PUBKEY and Signature
+user<--jumphost:SSH_MSG_USERAUTH_PK_OK
+
+note over user,jumphost: The user and server now have established a secure ssh connection,\nbut the jumphost dosnt know who the user is and what the user should be allowed to\nAll it knows, is that this secure connection is using a keypair with a publickey value of\nSHA256:+rafG2f3...
+
+user->jumphost: So actually, i would like to talk to 10.0.100.211:22\nSSH_MSG_CHANNEL_OPEN ("direct-tcpip", 10.0.100.211, 22, ...)
+
+activate jumphost
+note over jumphost:Hold on, let me have a talk with 10.0.100.211
+jumphost->10.0.100.211:SSH_MSG_USERAUTH_REQUEST\nwith USER emil and PUBKEY SHA256:+rafG2f3...
+note over 10.0.100.211:The local SSH daemon looks up this key\nfrom whatever sources it has configured\nTypically local users ~.ssh/authorized_keys
+jumphost<--10.0.100.211:SSH_MSG_USERAUTH_PK_OK
+deactivate jumphost
+jumphost-->user:SSH_MSG_REQUEST_SUCCESS\nchannel id N
+
+group channel N
+user->10.0.100.211:SSH_MSG_USERAUTH_REQUEST\nwith USER emil and PUBKEY SHA256:+rafG2f3...
+user<--10.0.100.211:SSH_MSG_USERAUTH_PK_OK
+user->10.0.100.211: SSH_MSG_USERAUTH_REQUEST\nwith USER, PUBKEY and Signature
+user<--10.0.100.211:SSH_MSG_USERAUTH_PK_OK
+note over user:The user now has a shell on\nthe remote system
+end

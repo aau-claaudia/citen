@@ -10,7 +10,7 @@ import (
 
 func main() {
 
-	listenAt := os.Getenv("JUMP_LISTEN")
+	listenAt := os.Getenv("CITEN_LISTEN")
 
 	// default listen to localhost at a random port
 	if listenAt == "" {

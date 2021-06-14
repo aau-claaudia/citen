@@ -10,7 +10,7 @@ import (
 var allowed []*net.IPNet
 
 func init() {
-	c := os.Getenv("JUMP_ALLOW")
+	c := os.Getenv("CITEN_ALLOW")
 	if c == "" {
 		_, a, _ := net.ParseCIDR("0.0.0.0/0")
 		allowed = []*net.IPNet{a}
