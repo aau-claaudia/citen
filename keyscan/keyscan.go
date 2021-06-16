@@ -43,8 +43,8 @@ func IsAllowed(target, username string, publickey []byte) bool {
 	// target ssh daemon into starting a pubkey auth challange, which it is unable
 	// to complete as it does not have access to the private key
 	//
-	// TODO: upstream a crypto/ssh patch which properly wraps errors
-	// so we can use errors.Is(err, ErrFakeSigned) insted of matching strings
+	// unfortunately we have to do a string compare
+	// https://github.com/golang/go/issues/45207
 	if err != nil && err.Error() == "ssh: handshake failed: fakeSigned" {
 		return true
 	}
