@@ -5,7 +5,7 @@ import (
 	"net"
 	"os"
 
-	"github.com/fasmide/jump/ssh"
+	"github.com/aau-claaudia/citen/ssh"
 )
 
 func main() {

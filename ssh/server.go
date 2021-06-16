@@ -9,8 +9,8 @@ import (
 	"os"
 	"time"
 
-	"github.com/fasmide/jump/filter"
-	"github.com/fasmide/jump/keyscan"
+	"github.com/aau-claaudia/citen/filter"
+	"github.com/aau-claaudia/citen/keyscan"
 	"golang.org/x/crypto/ssh"
 )
 
