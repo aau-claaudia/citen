@@ -1,5 +1,5 @@
 [Unit]
-Description=citen - ssh jump host
+Description=one-purpose ssh daemon for jump hosts
 After=network.target
 
 [Service]
@@ -8,12 +8,16 @@ Restart=always
 
 DynamicUser=yes
 AmbientCapabilities=CAP_NET_BIND_SERVICE
-
 ConfigurationDirectory=citen
+
+# use systemd overrides to change these values to your liking
+#
+# try to listen on every interface port 22
 Environment=CITEN_LISTEN=0.0.0.0:22
 
-# Allow hosts from 192.168.128.1 to 192.168.255.254
-Environment=CITEN_ALLOW=192.168.128.0/17
+# allow only connections to localhost
+# its not too bad if left unconfigured
+Environment=CITEN_ALLOW=127.0.0.1/32
 
 [Install]
 WantedBy=multi-user.target
