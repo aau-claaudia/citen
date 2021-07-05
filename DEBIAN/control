@@ -1,0 +1,10 @@
+Package: citen
+Version: DEBVERSION
+Homepage: https://github.com/aau-claaudia/citen
+Priority: optional
+Architecture: amd64
+Depends: libc6
+Maintainer: Kristian Mide <kristian@mide.dk>
+Description: citen
+ citen is a special one-purpose ssh daemon. It allows for authenticated jumps to preconfigured networks by probing destinations for public key acceptance.
+ Using citen, you can create a jump host that knows nothing about its users or their keypairs; every time a user tries to make a so-called direct-tcpip tunnel, citen will ask the destination if it should allow it. 
