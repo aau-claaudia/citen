@@ -51,3 +51,7 @@ ssh -L8080:192.168.1.42:80 citen-hostname
 `192.168.1.42:80` is now available on the client's localhost port 8080. 
 
 The auth scheme still applies here, and `192.168.1.42`'s ssh daemon will have to accept the user and public key combo.
+
+## UML Diagram
+
+The following tool was used to render the sequence diagram: [https://sequencediagram.org/](https://sequencediagram.org/)
