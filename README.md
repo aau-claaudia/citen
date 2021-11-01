@@ -33,8 +33,6 @@ $ CITEN_ALLOW="192.168.1.0/24" CITEN_LISTEN="0.0.0.0:22" citen
 2020/08/06 16:49:51 Listening on [::]:22
 ```
 
-Note: citen needs a host key in order to accept SSH traffic - you may have to generate a new SSH key pair by running `ssh-keygen`, citen expects a private `id_rsa` key in its work directory.
-
 ## Using citen
 Now that citen is running; you can use the ssh client's `-J` parameter to jump through it to another host located in the allowed network, e.g.:
 

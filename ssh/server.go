@@ -3,7 +3,6 @@ package ssh
 import (
 	"fmt"
 	"io"
-	"io/ioutil"
 	"log"
 	"net"
 	"os"
@@ -11,6 +10,7 @@ import (
 
 	"github.com/aau-claaudia/citen/filter"
 	"github.com/aau-claaudia/citen/keyscan"
+	"github.com/fasmide/hostkeys"
 	"golang.org/x/crypto/ssh"
 )
 
@@ -53,34 +53,15 @@ func DefaultConfig() (*ssh.ServerConfig, error) {
 		},
 	}
 
-	signer, err := signer()
-	if err != nil {
-		return nil, err
+	// in the event that the environment variable is unset
+	// the manager will default to the current work directory
+	m := &hostkeys.Manager{
+		Directory: os.Getenv("CONFIGURATION_DIRECTORY"),
 	}
 
-	config.AddHostKey(signer)
+	err := m.Manage(config)
 
-	return config, nil
-}
-
-func signer() (ssh.Signer, error) {
-	p := "id_rsa"
-	if os.Getenv("CONFIGURATION_DIRECTORY") != "" {
-		p = fmt.Sprintf("%s/%s", os.Getenv("CONFIGURATION_DIRECTORY"), p)
-	}
-
-	privateBytes, err := ioutil.ReadFile(p)
-	if err != nil {
-		return nil, fmt.Errorf("failed to load private key: %s", err)
-	}
-
-	signer, err := ssh.ParsePrivateKey(privateBytes)
-	if err != nil {
-		return nil, fmt.Errorf("failed to parse private key: %s", err)
-	}
-
-	return signer, nil
-
+	return config, err
 }
 
 func (s *Server) accept(c net.Conn) {
